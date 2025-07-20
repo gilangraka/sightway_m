@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sightway_mobile/shared/constants/colors.dart';
 
 class CustomInputField extends StatefulWidget {
   final IconData icon;
@@ -32,6 +33,17 @@ class _CustomInputFieldState extends State<CustomInputField> {
         prefixIcon: Icon(widget.icon),
         hintText: widget.placeholder,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.borderGrey), // warna normal
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: AppColors.text,
+            width: 2,
+          ), // warna saat fokus
+        ),
         suffixIcon: widget.isPassword
             ? IconButton(
                 icon: Icon(

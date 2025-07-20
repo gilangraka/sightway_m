@@ -9,9 +9,6 @@ class WelcomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(
-        0xF5F8FCFF,
-      ), // Warna latar belakang sesuai gambar
       body: SafeArea(
         child: Center(
           child: Padding(
@@ -20,34 +17,25 @@ class WelcomePage extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Image.asset(AppImages.logo, height: 180),
-                const SizedBox(height: 32),
-                const Text(
-                  'Sightway',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1B1E28),
+                const SizedBox(height: 48),
+                SizedBox(
+                  width: double.infinity,
+                  child: ButtonPrimary(
+                    label: 'Login',
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/login');
+                    },
                   ),
                 ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Navigate with Clarity\nConnect with Confidence',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 14, color: Color(0xFF2C2F3B)),
-                ),
-                const SizedBox(height: 48),
-                ButtonPrimary(
-                  label: 'Login',
-                  onPressed: () {
-                    Navigator.pushNamed(context, '/login');
-                  },
-                ),
                 const SizedBox(height: 16),
-                ButtonWhite(
-                  label: 'Register',
-                  onPressed: () {
-                    Navigator.pushNamed(context, '/register');
-                  },
+                SizedBox(
+                  width: double.infinity,
+                  child: ButtonWhite(
+                    label: 'Register',
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/register');
+                    },
+                  ),
                 ),
               ],
             ),

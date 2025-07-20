@@ -1,20 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:sightway_mobile/shared/constants/const.dart';
 import 'package:sightway_mobile/shared/widgets/buttons/button_primary.dart';
+import 'package:sightway_mobile/shared/widgets/inputs/alt_select_option_field.dart';
 import 'package:sightway_mobile/shared/widgets/inputs/custom_input_field.dart';
-import 'package:sightway_mobile/shared/widgets/inputs/custom_select_field.dart';
 import 'package:sightway_mobile/shared/widgets/navigations/custom_app_bar.dart';
 
-class LoginPage extends StatelessWidget {
+class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final TextEditingController emailController = TextEditingController();
-    final TextEditingController passwordController = TextEditingController();
-    final List<String> roles = ['Penyandang', 'Pemantau'];
-    String selectedRole = roles[0];
+  State<LoginPage> createState() => _LoginPageState();
+}
 
+class _LoginPageState extends State<LoginPage> {
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  final List<String> roles = ['Penyandang', 'Pemantau'];
+  String selectedRole = 'Penyandang';
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: const CustomAppBar(title: 'Login'),
       body: Padding(
@@ -23,7 +28,7 @@ class LoginPage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(height: 24),
-            Image.asset(AppImages.logo, height: 80),
+            Image.asset(AppImages.logoBlank, height: 80),
             const SizedBox(height: 32),
 
             CustomInputField(
@@ -42,13 +47,20 @@ class LoginPage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            CustomSelectField(
-              icon: Icons.person,
-              placeholder: 'Login Sebagai',
+            const Text(
+              "Login sebagai :",
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+
+            const SizedBox(height: 16),
+
+            AltSelectOptionField(
               options: roles,
               selectedValue: selectedRole,
               onChanged: (value) {
-                selectedRole = value!;
+                setState(() {
+                  selectedRole = value;
+                });
               },
             ),
             const SizedBox(height: 32),
@@ -58,6 +70,27 @@ class LoginPage extends StatelessWidget {
               onPressed: () {
                 // TODO: handle login
               },
+            ),
+
+            const SizedBox(height: 16),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text("Belum memiliki akun?"),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pushReplacementNamed(context, '/register');
+                  },
+                  child: const Text(
+                    "Daftar",
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

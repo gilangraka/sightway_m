@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:sightway_mobile/shared/constants/images.dart';
 import 'package:sightway_mobile/shared/widgets/buttons/button_primary.dart';
+import 'package:sightway_mobile/shared/widgets/inputs/alt_select_option_field.dart';
 import 'package:sightway_mobile/shared/widgets/inputs/custom_input_field.dart';
-import 'package:sightway_mobile/shared/widgets/inputs/custom_select_field.dart';
 import 'package:sightway_mobile/shared/widgets/navigations/custom_app_bar.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -23,30 +24,34 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xF3F7FCFF),
       appBar: const CustomAppBar(title: 'Register'),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            Image.asset(AppImages.logoBlank, height: 80),
+            const SizedBox(height: 24),
             const Text(
               "Register sebagai :",
               style: TextStyle(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 10),
-            CustomSelectField(
-              icon: Icons.person,
-              placeholder: 'Register Sebagai',
+            AltSelectOptionField(
               options: roles,
               selectedValue: selectedRole,
               onChanged: (value) {
                 setState(() {
-                  selectedRole = value!;
+                  selectedRole = value;
                 });
               },
             ),
 
+            const SizedBox(height: 10),
+            const Text(
+              "Data User :",
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
             const SizedBox(height: 10),
             CustomInputField(
               icon: Icons.email,
@@ -68,7 +73,7 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
             const SizedBox(height: 10),
             CustomInputField(
-              icon: Icons.lock_outline,
+              icon: Icons.lock,
               placeholder: 'Konfirmasi Password',
               controller: confirmPasswordController,
               isPassword: true,

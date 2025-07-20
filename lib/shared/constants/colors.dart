@@ -14,7 +14,9 @@ class AppColors {
   static const infoText = Color(0xFF194D7D);
 
   static const primary = Color(0xFFA855F7);
-  static const background = Color(0xFFF5F5F5);
+  static const background = Color(0xFFFFFFFF);
   static const text = Color(0xFF1E293B);
   static const white = Color(0xFFFFFFFF);
+
+  static const borderGrey = Color(0xFFE0E0E0);
 }

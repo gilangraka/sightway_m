@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sightway_mobile/shared/constants/colors.dart';
 
 class CustomSelectField extends StatelessWidget {
   final IconData icon;
@@ -26,7 +27,10 @@ class CustomSelectField extends StatelessWidget {
       decoration: InputDecoration(
         prefixIcon: Icon(icon),
         hintText: placeholder,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.borderGrey, width: 1),
+        ),
       ),
       onChanged: onChanged,
     );
