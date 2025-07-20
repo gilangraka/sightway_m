@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sightway_mobile/modules/penyandang/widgets/blindstick_empty.dart';
 import 'package:sightway_mobile/shared/widgets/users/card_related_user.dart';
 import 'package:sightway_mobile/shared/widgets/users/welcome_header.dart';
 
@@ -29,32 +30,11 @@ class PenyandangHomePage extends StatelessWidget {
               const SizedBox(height: 30),
 
               // Blindstick section
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Column(
-                  children: const [
-                    Icon(
-                      Icons.center_focus_strong,
-                      size: 40,
-                      color: Colors.black,
-                    ),
-                    SizedBox(height: 12),
-                    Text(
-                      "Kamu belum memiliki Blindstick",
-                      style: TextStyle(
-                        fontWeight: FontWeight.w500,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
+              BlindstickEmpty(
+                mailOnClick: () {
+                  Navigator.pushNamed(context, '/scan-qr');
+                },
               ),
-
               const SizedBox(height: 30),
 
               // Keluarga section

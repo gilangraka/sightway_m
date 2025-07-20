@@ -3,9 +3,11 @@ import 'package:sightway_mobile/modules/guest/views/login_page.dart';
 import 'package:sightway_mobile/modules/guest/views/register_page.dart';
 import 'package:sightway_mobile/modules/guest/views/welcome_page.dart';
 import 'package:sightway_mobile/modules/penyandang/views/penyandang_index_page.dart';
+import 'package:sightway_mobile/modules/penyandang/views/qr_scanner_page.dart';
 import 'package:sightway_mobile/shared/constants/colors.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 
@@ -38,6 +40,7 @@ class MyApp extends StatelessWidget {
         '/register': (context) => const RegisterPage(),
 
         '/penyandang': (context) => const PenyandangIndexPage(),
+        '/scan-qr': (context) => const QrScannerPage(),
       },
     );
   }
