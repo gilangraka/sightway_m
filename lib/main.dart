@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sightway_mobile/modules/guest/views/login_page.dart';
 import 'package:sightway_mobile/modules/guest/views/register_page.dart';
 import 'package:sightway_mobile/modules/guest/views/welcome_page.dart';
+import 'package:sightway_mobile/modules/penyandang/views/penyandang_index_page.dart';
 import 'package:sightway_mobile/shared/constants/colors.dart';
 
 void main() {
@@ -30,11 +31,13 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      initialRoute: '/',
+      initialRoute: '/penyandang',
       routes: {
         '/': (context) => const WelcomePage(),
         '/login': (context) => const LoginPage(),
         '/register': (context) => const RegisterPage(),
+
+        '/penyandang': (context) => const PenyandangIndexPage(),
       },
     );
   }
