@@ -23,7 +23,7 @@ class MyApp extends StatelessWidget {
         scaffoldBackgroundColor: AppColors.background,
         colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primary),
         appBarTheme: const AppBarTheme(
-          backgroundColor: AppColors.white, // Untuk AppBar
+          backgroundColor: AppColors.white,
           elevation: 0,
           iconTheme: IconThemeData(color: Colors.black),
           titleTextStyle: TextStyle(
@@ -33,7 +33,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      initialRoute: '/penyandang',
+      initialRoute: '/',
       routes: {
         '/': (context) => const WelcomePage(),
         '/login': (context) => const LoginPage(),

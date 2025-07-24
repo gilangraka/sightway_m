@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sightway_mobile/modules/guest/controllers/auth_controller.dart';
 import 'package:sightway_mobile/shared/constants/images.dart';
 import 'package:sightway_mobile/shared/widgets/buttons/button_primary.dart';
 import 'package:sightway_mobile/shared/widgets/inputs/alt_select_option_field.dart';
@@ -20,6 +21,7 @@ class _RegisterPageState extends State<RegisterPage> {
       TextEditingController();
   final TextEditingController nameController = TextEditingController();
   String selectedRole = roles[0];
+  final AuthController _authController = AuthController();
 
   @override
   Widget build(BuildContext context) {
@@ -81,7 +83,19 @@ class _RegisterPageState extends State<RegisterPage> {
             const SizedBox(height: 30),
             SizedBox(
               width: double.infinity,
-              child: ButtonPrimary(label: 'Register', onPressed: () {}),
+              child: ButtonPrimary(
+                label: 'Register',
+                onPressed: () {
+                  _authController.registerUser(
+                    context: context,
+                    email: emailController.text.trim(),
+                    name: nameController.text.trim(),
+                    password: passwordController.text,
+                    confirmPassword: confirmPasswordController.text,
+                    role: selectedRole,
+                  );
+                },
+              ),
             ),
           ],
         ),

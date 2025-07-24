@@ -1,48 +1,40 @@
 import 'package:dio/dio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DioService {
-  // Buat instance Dio pribadi
   final Dio _dio;
 
-  // Ganti dengan URL backend API Anda
-  static const String _baseUrl = 'https://api.domain-proyek-anda.com';
+  static const String _baseUrl = 'https://api-sightway.dgdev.my.id';
 
   DioService()
     : _dio = Dio(
         BaseOptions(
           baseUrl: _baseUrl,
-          connectTimeout: const Duration(seconds: 5), // Timeout koneksi 5 detik
-          receiveTimeout: const Duration(
-            seconds: 3,
-          ), // Timeout menerima data 3 detik
-          headers: {
-            'Content-Type': 'application/json; charset=UTF-8',
-            // Anda juga bisa menaruh header global di sini, misal token otentikasi
-          },
+          connectTimeout: const Duration(seconds: 5),
+          receiveTimeout: const Duration(seconds: 3),
+          headers: {'Content-Type': 'application/json; charset=UTF-8'},
         ),
       );
 
-  /// Mengirim laporan darurat ke endpoint /emergency
   Future<void> sendEmergencyReport(String detectedText) async {
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      if (token != null) {
+        _dio.options.headers['Authorization'] = 'Bearer $token';
+      }
+
       final response = await _dio.post(
-        '/emergency', // Endpoint spesifik
-        data: {
-          'text': detectedText,
-          'userId': '12345', // Contoh data tambahan
-        },
+        '/emergency',
+        data: {'text': detectedText, 'userId': '12345'},
       );
 
-      // Dio akan melempar error untuk status code non-2xx secara default,
-      // jadi kita bisa asumsikan request berhasil jika tidak ada error.
       print('Laporan darurat berhasil dikirim! Status: ${response.statusCode}');
     } on DioException catch (e) {
-      // Tangani error spesifik dari Dio (misal: timeout, tidak ada koneksi, error server)
       print('Error Dio saat mengirim laporan: ${e.message}');
-      // Lempar kembali error agar bisa ditangani di UI
       throw Exception('Gagal menghubungi server: ${e.message}');
     } catch (e) {
-      // Tangani error lainnya
       print('Error tidak terduga: $e');
       throw Exception('Terjadi error yang tidak diketahui.');
     }

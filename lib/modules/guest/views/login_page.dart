@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sightway_mobile/modules/guest/controllers/auth_controller.dart';
 import 'package:sightway_mobile/shared/constants/const.dart';
 import 'package:sightway_mobile/shared/widgets/buttons/button_primary.dart';
 import 'package:sightway_mobile/shared/widgets/inputs/alt_select_option_field.dart';
@@ -17,6 +18,7 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController passwordController = TextEditingController();
   final List<String> roles = ['Penyandang', 'Pemantau'];
   String selectedRole = 'Penyandang';
+  final AuthController _authController = AuthController();
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +70,12 @@ class _LoginPageState extends State<LoginPage> {
             ButtonPrimary(
               label: 'Login',
               onPressed: () {
-                // TODO: handle login
+                _authController.loginUser(
+                  context: context,
+                  email: emailController.text.trim(),
+                  password: passwordController.text.trim(),
+                  role: selectedRole,
+                );
               },
             ),
 
