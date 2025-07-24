@@ -1,10 +1,11 @@
-// lib/modules/penyandang/views/penyandang_index_page.dart
-
 import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:stts/stts.dart';
-// [1] Ganti import ke service yang baru
+import 'package:sightway_mobile/modules/penyandang/views/penyandang_home_page.dart';
+import 'package:sightway_mobile/services/dio_service.dart';
 import 'package:sightway_mobile/services/emergency_service.dart';
+import 'package:sightway_mobile/shared/widgets/navigations/bottom_navigation.dart';
+import 'package:stts/stts.dart';
 
 class PenyandangIndexPage extends StatefulWidget {
   const PenyandangIndexPage({super.key});
@@ -14,21 +15,24 @@ class PenyandangIndexPage extends StatefulWidget {
 }
 
 class _PenyandangIndexPageState extends State<PenyandangIndexPage> {
-  // --- STTS ---
+  // --- Services & State ---
   final _stt = Stt();
-  StreamSubscription? _stateSubscription;
-  StreamSubscription? _resultSubscription;
-  bool _isListening = false;
-
-  // --- AI Service ---
-  // [2] Deklarasikan EmergencyService, gunakan 'late' karena akan diinisialisasi di initState
+  final DioService _dioService = DioService();
   late EmergencyService _aiService;
   bool _isAIServiceInitialized = false;
+  bool _isListening = false;
+  bool _isProcessing = false; // [PERUBAHAN] Flag untuk mengontrol alur
 
-  // --- State UI ---
+  // --- Timers & State UI ---
+  Timer? _debounce;
+  Timer? _maxDurationTimer;
   String _statusMessage = 'Menginisialisasi...';
   String _lastTranscription = '';
   String _predictionResult = '';
+
+  // --- Subscriptions ---
+  StreamSubscription? _stateSubscription;
+  StreamSubscription? _resultSubscription;
 
   @override
   void initState() {
@@ -36,173 +40,206 @@ class _PenyandangIndexPageState extends State<PenyandangIndexPage> {
     _initialize();
   }
 
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _maxDurationTimer?.cancel();
+    _stateSubscription?.cancel();
+    _resultSubscription?.cancel();
+    _stt.dispose();
+    super.dispose();
+  }
+
   Future<void> _initialize() async {
-    // 1. Inisialisasi service AI menggunakan factory method `create()`
-    // [3] Ubah cara inisialisasi service
     _aiService = await EmergencyService.create();
     setState(() {
       _isAIServiceInitialized = true;
     });
 
-    // 2. Minta izin dan setup listener STTS
     await _stt.hasPermission();
 
+    // [PERUBAHAN] Logika onStateChanged disederhanakan
     _stateSubscription = _stt.onStateChanged.listen(
       (state) {
+        if (!mounted) return;
         setState(() {
           _isListening = state == SttState.start;
-          if (_isListening) {
-            _statusMessage = 'Mendengarkan...';
-          } else {
-            // Tetap 'Menunggu suara...' jika tidak sedang mendengarkan
-            if (_statusMessage != 'Menganalisis teks...') {
-              _statusMessage = 'Menunggu suara...';
-            }
-          }
         });
+
+        if (_isListening) {
+          _resetTimersAndState();
+        } else {
+          // Jika STT berhenti DAN kita tidak sedang memproses hasil,
+          // artinya ini adalah timeout/cancel. Maka mulai ulang.
+          if (!_isProcessing && _lastTranscription.trim().isEmpty) {
+            // <--- [PERBAIKAN]
+            print(
+              "STT berhenti tanpa hasil (timeout/cancel). Memulai ulang...",
+            );
+            Future.delayed(const Duration(milliseconds: 500), () {
+              if (mounted && !_isListening && !_isProcessing) {
+                _stt.start();
+              }
+            });
+          }
+        }
       },
       onError: (err) {
+        if (!mounted) return;
         setState(() {
           _statusMessage = 'Error STT: $err';
         });
+        _restartListeningCycle(); // Coba mulai ulang jika ada error
       },
     );
 
     _resultSubscription = _stt.onResultChanged.listen((result) {
-      final String transcribedText = result.text;
+      if (!mounted) return;
+      final transcribedText = result.text;
+      setState(() {
+        _lastTranscription = transcribedText;
+      });
 
-      if (transcribedText.trim().isNotEmpty) {
-        setState(() {
-          _lastTranscription = transcribedText;
-          _statusMessage = 'Menganalisis teks...';
-        });
-        _runPrediction(transcribedText);
-      }
+      if (transcribedText.trim().isEmpty) return;
+
+      _startOrResetTimers(transcribedText);
     });
 
-    // 3. Mulai mendengarkan secara terus-menerus
     _stt.start();
   }
 
-  @override
-  void dispose() {
-    _stateSubscription?.cancel();
-    _resultSubscription?.cancel();
-    _stt.dispose();
-    // [4] Hapus pemanggilan dispose, karena EmergencyService tidak memilikinya
-    // _aiService.dispose();
-    super.dispose();
+  void _resetTimersAndState() {
+    _debounce?.cancel();
+    _maxDurationTimer?.cancel();
+    _debounce = null;
+    _maxDurationTimer = null;
+    setState(() {
+      _statusMessage = 'Mendengarkan...';
+      _lastTranscription = '';
+      _predictionResult = '';
+    });
+  }
+
+  void _startOrResetTimers(String text) {
+    // [PERUBAHAN] Sesuaikan durasi timer sesuai kebutuhan Anda
+    if (_maxDurationTimer == null || !_maxDurationTimer!.isActive) {
+      _maxDurationTimer = Timer(const Duration(seconds: 3), () {
+        print("Batas waktu 3 detik tercapai!");
+        _finalizeAndPredict(text);
+      });
+    }
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(seconds: 3), () {
+      print("Pengguna berhenti bicara (jeda 2 detik).");
+      _finalizeAndPredict(text);
+    });
+  }
+
+  void _finalizeAndPredict(String text) {
+    // [PERUBAHAN] Cek flag _isProcessing agar tidak dieksekusi ganda
+    if (_isProcessing || (_debounce == null && _maxDurationTimer == null))
+      return;
+
+    // [PERUBAHAN] Set flag untuk menandakan proses dimulai
+    setState(() {
+      _isProcessing = true;
+    });
+
+    _debounce?.cancel();
+    _maxDurationTimer?.cancel();
+    _debounce = null;
+    _maxDurationTimer = null;
+
+    if (text.trim().isEmpty) {
+      print("Teks kosong, tidak ada yang diproses. Memulai ulang siklus...");
+      _restartListeningCycle(); // Langsung mulai ulang jika teks ternyata kosong
+      return;
+    }
+
+    setState(() => _statusMessage = 'Menganalisis teks...');
+    _runPrediction(text);
   }
 
   Future<void> _runPrediction(String text) async {
-    if (!_isAIServiceInitialized) return;
+    if (!_isAIServiceInitialized) {
+      _restartListeningCycle();
+      return;
+    }
 
-    // [5] Panggil predict dan tangani hasilnya yang berupa Map
-    final Map<String, dynamic> prediction = await _aiService.predict(text);
+    final prediction = await _aiService.predict(text);
+    final predictionValue = prediction['prediksi_nilai'];
+    final category = prediction['kategori'];
+    final isEmergency = category == "darurat";
 
-    // Ambil nilai dari Map
-    final double predictionValue = prediction['prediksi_nilai'];
-    final String category = prediction['kategori'];
-    final bool isEmergency = category == "darurat";
-
-    setState(() {
-      _predictionResult =
-          'Prediksi: ${predictionValue.toStringAsFixed(3)} '
-          '(${category.toUpperCase()})';
-
-      // Kembalikan status setelah analisis selesai
-      if (_isListening) {
-        _statusMessage = 'Mendengarkan...';
-      } else {
-        _statusMessage = 'Menunggu suara...';
-      }
-    });
+    if (mounted) {
+      setState(() {
+        _predictionResult =
+            'Prediksi: ${predictionValue.toStringAsFixed(3)} (${category.toUpperCase()})';
+      });
+    }
 
     if (isEmergency) {
-      _showEmergencyAlert(text);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Mengirim laporan darurat: "$text"')),
+      );
+
+      try {
+        await _dioService.sendEmergencyReport(text);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✅ Laporan berhasil dikirim!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('❌ $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+
+    // [PERUBAHAN] Beri jeda sebelum memulai siklus baru
+    Future.delayed(const Duration(seconds: 2), _restartListeningCycle);
+  }
+
+  // [PERUBAHAN] Fungsi baru untuk me-restart siklus pendengaran
+  void _restartListeningCycle() {
+    print("Siklus selesai. Memulai ulang mode pendengaran...");
+    if (mounted) {
+      setState(() {
+        _isProcessing = false; // Reset flag
+      });
+      // Pastikan untuk memulai hanya jika belum mendengarkan
+      if (!_isListening) {
+        _stt.start();
+      }
     }
   }
 
-  void _showEmergencyAlert(String detectedText) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('🚨 DETEKSI DARURAT! 🚨'),
-        content: Text(
-          'Kalimat terdeteksi:\n\n"$detectedText"\n\nSegera kirim notifikasi bantuan?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Abaikan'),
-          ),
-          FilledButton(
-            onPressed: () {
-              // Mengingat proyek Anda 'Sightway', ini adalah tempat logika
-              // untuk mengirim notifikasi ke aplikasi web atau pemantau lainnya.
-              print("MENGIRIM NOTIFIKASI BANTUAN DARI SIGHTWAY!");
-              Navigator.of(context).pop();
-            },
-            child: const Text('Kirim Bantuan'),
-          ),
-        ],
-      ),
-    );
+  int _selectedIndex = 0;
+
+  final List<Widget> _pages = [
+    const PenyandangHomePage(),
+    Center(child: Text('Pemantau Page')),
+    Center(child: Text('Settings Page')),
+  ];
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Sightway - Mode Pendengaran"),
-        backgroundColor: _isListening ? Colors.red.shade100 : Colors.white,
-      ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                _isListening ? Icons.mic : Icons.mic_off, // Icon lebih sesuai
-                size: 80,
-                color: _isListening ? Colors.red : Colors.blueGrey,
-              ),
-              const SizedBox(height: 24),
-              Text(
-                _statusMessage,
-                style: Theme.of(context).textTheme.headlineSmall,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 40),
-              if (_lastTranscription.isNotEmpty) ...[
-                Text(
-                  'Transkripsi Terakhir:',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: Text(
-                    _lastTranscription,
-                    style: Theme.of(context).textTheme.bodyLarge,
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ],
-              if (_predictionResult.isNotEmpty)
-                Text(
-                  _predictionResult,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: _predictionResult.contains("DARURAT")
-                        ? Colors.red
-                        : Colors.green,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-            ],
-          ),
+      body: _pages[_selectedIndex],
+      bottomNavigationBar: SafeArea(
+        // ⬅️ Ini penting!
+        child: BottomNavbar(
+          role: "penyandang",
+          currentIndex: _selectedIndex,
+          onTap: _onItemTapped,
         ),
       ),
     );
