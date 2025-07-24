@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sightway_mobile/modules/guest/views/login_page.dart';
 import 'package:sightway_mobile/modules/guest/views/register_page.dart';
@@ -11,6 +12,8 @@ import 'package:sightway_mobile/shared/constants/colors.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await Permission.location.request();
   await FirebaseService.init();
 
   // Ambil initial route berdasarkan shared preferences
