@@ -175,4 +175,37 @@ class FirebaseService {
       rethrow;
     }
   }
+
+  Future<List<Map<String, dynamic>>> getListPushNotification(
+    String userId,
+  ) async {
+    try {
+      final snapshot = await _db
+          .child('push_notifications')
+          .child(userId)
+          .orderByChild('created_at')
+          .get();
+
+      if (!snapshot.exists) return [];
+
+      // Ambil data dan konversi ke list Map, lalu urutkan dari terbaru
+      final data = snapshot.value as Map<dynamic, dynamic>;
+      final notifList = data.entries.map((e) {
+        final val = Map<String, dynamic>.from(e.value);
+        return {
+          'title': val['title'] ?? '',
+          'body': val['body'] ?? '',
+          'created_at': val['created_at'] ?? '',
+        };
+      }).toList();
+
+      // Urutkan dari created_at terbaru
+      notifList.sort((a, b) => b['created_at'].compareTo(a['created_at']));
+
+      return notifList;
+    } catch (e) {
+      print("Error fetching notifications: $e");
+      return [];
+    }
+  }
 }

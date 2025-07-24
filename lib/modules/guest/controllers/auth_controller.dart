@@ -35,19 +35,20 @@ class AuthController {
       final user = data['user'];
 
       if (token != null) {
+        print("pass 2");
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('token', token);
-        await prefs.setString('user_id', user['id']);
+        await prefs.setString('user_id', user['id'].toString());
         await prefs.setString('user_name', user['name']);
         await prefs.setString('user_email', user['email']);
-
+        await prefs.setString('user_role', user['roles'][0]['name']);
         // ✅ Ambil token FCM
         final fcmToken = await FirebaseMessaging.instance.getToken();
 
         // ✅ Kirim ke Realtime Database sesuai role
         if (role.toLowerCase() == 'penyandang') {
           await FirebaseService.sendDataPenyandangToFirebase(
-            user['id'],
+            user['id'].toString(),
             user['name'],
             user['email'],
             fcmToken ?? '',
@@ -65,9 +66,9 @@ class AuthController {
 
         // ✅ Arahkan ke home
         if (role.toLowerCase() == 'penyandang') {
-          Navigator.pushReplacementNamed(context, '/penyandang/home');
+          Navigator.pushReplacementNamed(context, '/penyandang');
         } else {
-          Navigator.pushReplacementNamed(context, '/pemantau/home');
+          Navigator.pushReplacementNamed(context, '/pemantau');
         }
       } else {
         _showSnackbar(
@@ -77,9 +78,9 @@ class AuthController {
         );
       }
     } on DioException catch (e) {
-      final message = e.response?.data?['message'] ?? e.message;
+      final message = e.response?.data['detail'] ?? e.message;
       _showSnackbar(context, 'Login gagal: $message', AppColors.dangerText);
-      print(e.response?.data);
+      print(e.response?.data['detail']);
     } catch (e) {
       _showSnackbar(context, 'Terjadi error: $e', AppColors.dangerText);
     }

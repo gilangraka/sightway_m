@@ -1,14 +1,37 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sightway_mobile/modules/penyandang/widgets/blindstick_empty.dart';
+import 'package:sightway_mobile/shared/widgets/navigations/custom_app_bar.dart';
 import 'package:sightway_mobile/shared/widgets/users/card_related_user.dart';
 import 'package:sightway_mobile/shared/widgets/users/welcome_header.dart';
 
-class PenyandangHomePage extends StatelessWidget {
+class PenyandangHomePage extends StatefulWidget {
   const PenyandangHomePage({super.key});
+
+  @override
+  State<PenyandangHomePage> createState() => _PenyandangHomePageState();
+}
+
+class _PenyandangHomePageState extends State<PenyandangHomePage> {
+  String userName = "";
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserName();
+  }
+
+  Future<void> _loadUserName() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      userName = prefs.getString('user_name') ?? 'Pengguna';
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: CustomAppBar(title: "Home", showBackButton: false),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20),
@@ -20,13 +43,11 @@ class PenyandangHomePage extends StatelessWidget {
                 imgUrl:
                     "https://yfgbsigquyriibzovooi.supabase.co/storage/v1/object/public/sightway/post/logo-blank.png",
                 role: "Penyandang",
-                name: "Gilang Raka Ramadhan",
+                name: userName,
                 mailOnClick: () {
-                  // Aksi ketika email diklik
-                  print("Email clicked");
+                  Navigator.pushNamed(context, '/mail');
                 },
               ),
-
               const SizedBox(height: 30),
 
               // Blindstick section

@@ -5,7 +5,7 @@ class DioClient {
   static final Dio _dio =
       Dio(
           BaseOptions(
-            baseUrl: 'https://api-sightway.dgdev.my.id',
+            baseUrl: 'http://103.47.225.235:8000/',
             connectTimeout: const Duration(seconds: 10),
             receiveTimeout: const Duration(seconds: 10),
           ),
