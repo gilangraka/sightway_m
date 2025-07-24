@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sightway_mobile/shared/widgets/list_notification_card.dart';
+import 'package:sightway_mobile/shared/widgets/cards/list_notification_card.dart';
 import 'package:sightway_mobile/shared/widgets/navigations/custom_app_bar.dart';
 import 'package:sightway_mobile/services/firebase_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';

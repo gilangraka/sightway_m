@@ -2,7 +2,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
 class TokenStorage {
-  static const _tokenKey = 'auth_token';
+  static const _tokenKey = 'token';
   static const _userInfoKey = 'user_info';
 
   static Future<void> saveToken(String token) async {
