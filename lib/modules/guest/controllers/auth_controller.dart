@@ -1,7 +1,9 @@
 import 'package:dio/dio.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sightway_mobile/services/dio_client.dart';
+import 'package:sightway_mobile/services/firebase_service.dart';
 import 'package:sightway_mobile/shared/constants/colors.dart';
 
 class AuthController {
@@ -18,7 +20,6 @@ class AuthController {
       return;
     }
 
-    // Tentukan endpoint berdasarkan role
     final endpoint = role.toLowerCase() == 'penyandang'
         ? '/mobile/auth/login/penyandang'
         : '/mobile/auth/login/pemantau';
@@ -31,16 +32,38 @@ class AuthController {
 
       final data = response.data;
       final token = data['access_token'];
+      final user = data['user'];
 
       if (token != null) {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('token', token);
-        await prefs.setString('user_name', data['user']['name']);
-        await prefs.setString('user_email', data['user']['email']);
+        await prefs.setString('user_id', user['id']);
+        await prefs.setString('user_name', user['name']);
+        await prefs.setString('user_email', user['email']);
+
+        // ✅ Ambil token FCM
+        final fcmToken = await FirebaseMessaging.instance.getToken();
+
+        // ✅ Kirim ke Realtime Database sesuai role
+        if (role.toLowerCase() == 'penyandang') {
+          await FirebaseService.sendDataPenyandangToFirebase(
+            user['id'],
+            user['name'],
+            user['email'],
+            fcmToken ?? '',
+          );
+        } else {
+          await FirebaseService.sendDataPemantauToFirebase(
+            user['id'],
+            user['name'],
+            user['email'],
+            fcmToken ?? '',
+          );
+        }
 
         _showSnackbar(context, 'Login berhasil!', AppColors.primary);
 
-        // Arahkan ke halaman home sesuai role
+        // ✅ Arahkan ke home
         if (role.toLowerCase() == 'penyandang') {
           Navigator.pushReplacementNamed(context, '/penyandang/home');
         } else {

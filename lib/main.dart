@@ -4,10 +4,12 @@ import 'package:sightway_mobile/modules/guest/views/register_page.dart';
 import 'package:sightway_mobile/modules/guest/views/welcome_page.dart';
 import 'package:sightway_mobile/modules/penyandang/views/penyandang_index_page.dart';
 import 'package:sightway_mobile/modules/penyandang/views/qr_scanner_page.dart';
+import 'package:sightway_mobile/services/firebase_service.dart';
 import 'package:sightway_mobile/shared/constants/colors.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await FirebaseService.init();
   runApp(const MyApp());
 }
 

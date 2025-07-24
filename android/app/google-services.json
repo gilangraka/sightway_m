@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "536946297105",
+    "firebase_url": "https://sightway-9f360-default-rtdb.firebaseio.com",
+    "project_id": "sightway-9f360",
+    "storage_bucket": "sightway-9f360.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:536946297105:android:f5674865031e5121bb24b0",
+        "android_client_info": {
+          "package_name": "com.example.sightway_mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDnFafqSm_BX0cwamYVOWLMnfXOhY_m32I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
