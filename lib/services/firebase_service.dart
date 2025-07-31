@@ -1,11 +1,19 @@
+import 'dart:io';
+
+import 'package:camera/camera.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:dio/dio.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:sightway_mobile/services/dio_client.dart';
 import 'package:sightway_mobile/services/dio_service.dart';
+import 'package:sightway_mobile/services/supabase_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:record/record.dart';
+import 'package:path_provider/path_provider.dart';
 
 class FirebaseService {
   static final FirebaseMessaging _messaging = FirebaseMessaging.instance;
@@ -216,9 +224,25 @@ class FirebaseService {
   static Future<void> penyandangEmergencyFunction({
     required String userId,
     required String userName,
+    required String detectedText,
+    required double predictionValue,
   }) async {
     try {
       debugPrint('🚨 FUNGSI DARURAT DIMULAI UNTUK USER: $userId');
+
+      // --- [0] Rekam Audio 5 Detik ---
+      debugPrint('🎤 Merekam audio 5 detik...');
+      final record = AudioRecorder();
+      final tempDir = await getTemporaryDirectory();
+      final audioPath = '${tempDir.path}/emergency_audio.m4a';
+
+      if (await record.hasPermission()) {
+        await record.start(const RecordConfig(), path: audioPath);
+        await Future.delayed(Duration(seconds: 5));
+        await record.stop();
+      } else {
+        debugPrint('❌ Tidak ada izin untuk merekam audio.');
+      }
 
       // 1. Dapatkan daftar pemantau dari API
       debugPrint('🔄 [1/4] Mengambil daftar pemantau...');
@@ -240,7 +264,41 @@ class FirebaseService {
       debugPrint('🔄 [2/4] Mencatat log darurat di Firebase...');
       final emergencyId = DateTime.now().millisecondsSinceEpoch.toString();
       final Position position = await _getCurrentLocation();
-      const folderBucket = 'http://google.com'; // Sesuai permintaan
+
+      final supabaseService = SupabaseService(
+        supabaseUrl: "https://yfgbsigquyriibzovooi.supabase.co",
+        supabaseAnonKey:
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmZ2JzaWdxdXlyaWliem92b29pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE0NzIyODMsImV4cCI6MjA2NzA0ODI4M30.HKx7X4wbq8O_qQ667apVDfcdrUkKPqYxohT_VsJ_9Q8",
+        bucket: "sightway",
+      );
+
+      final List<String> photoUrls = await supabaseService
+          .captureAndUploadPhotos(
+            userId: userId,
+            supabase: supabaseService.client,
+            bucket: "sightway",
+          );
+      final folderBucket = photoUrls;
+
+      // Upload audio
+      String? lastAudioUrl;
+      final audioFile = File(audioPath);
+      if (await audioFile.exists()) {
+        final fileBytes = await audioFile.readAsBytes();
+        final audioFilePath = 'emergency/$userId/$emergencyId/audio.m4a';
+
+        await supabaseService.client.storage
+            .from("sightway")
+            .uploadBinary(
+              audioFilePath,
+              fileBytes,
+              fileOptions: FileOptions(contentType: 'audio/m4a'),
+            );
+
+        lastAudioUrl = supabaseService.client.storage
+            .from("sightway")
+            .getPublicUrl(audioFilePath);
+      }
 
       final emergencyLogRef = _db
           .child('penyandang')
@@ -253,6 +311,9 @@ class FirebaseService {
         'latitude': position.latitude,
         'longitude': position.longitude,
         'folder_bucket_supabase': folderBucket,
+        'kalimat_terdeteksi': detectedText,
+        'probabilitas_darurat': predictionValue,
+        'last_audio': lastAudioUrl,
       });
       debugPrint('✅ [2/4] Log darurat berhasil dicatat di RTDB.');
 
