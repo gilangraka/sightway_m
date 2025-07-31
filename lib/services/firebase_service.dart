@@ -319,54 +319,18 @@ class FirebaseService {
 
       // 3. Cari FCM token untuk setiap pemantau
       debugPrint('🔄 [3/4] Mencari FCM token para pemantau...');
-      final pemantauRef = _db.child('pemantau');
-      final snapshot = await pemantauRef.get();
-      final Map<int, String> pemantauTokens = {};
-
-      if (snapshot.exists) {
-        final allPemantau = snapshot.value as Map;
-        // Iterasi melalui semua data pemantau untuk menemukan yang cocok
-        for (final pemantauData in allPemantau.values) {
-          final data = Map<String, dynamic>.from(pemantauData);
-          final pemantauUserId = data['user_id'];
-          if (pemantauUserIds.contains(pemantauUserId)) {
-            if (data['fcm_token'] != null) {
-              pemantauTokens[pemantauUserId] = data['fcm_token'];
-            }
-          }
-        }
-      }
-      debugPrint(
-        '✅ [3/4] Ditemukan ${pemantauTokens.length} token FCM yang valid.',
-      );
 
       // 4. Kirim notifikasi FCM ke setiap pemantau
       debugPrint('🔄 [4/4] Mengirim notifikasi FCM...');
-      if (pemantauTokens.isEmpty) {
-        debugPrint(
-          '⚠️ Tidak ada token FCM yang ditemukan, notifikasi tidak dikirim.',
+      try {
+        await DioClient.client.get(
+          '/mobile/penyandang/send-emergency-to-pemantau',
         );
-        return;
+        debugPrint('✅ Notifikasi berhasil terkirim');
+      } catch (e) {
+        debugPrint('❌ Gagal mengirim notifikasi: $e');
       }
 
-      for (final token in pemantauTokens.values) {
-        try {
-          await DioClient.client.post(
-            '/send-fcm',
-            data: {
-              'token': token,
-              'title': 'Penyandang Terdeteksi Darurat!',
-              'body':
-                  'Penyandang $userName terdeteksi darurat! Cepat monitoring untuk mendapatkan data lokasi dan detail penyandang!!',
-              'user_id': userId,
-            },
-          );
-          debugPrint('✅ Notifikasi berhasil terkirim ke token: $token');
-        } catch (e) {
-          debugPrint('❌ Gagal mengirim notifikasi ke token $token: $e');
-          // Lanjutkan ke token berikutnya meskipun ada yang gagal
-        }
-      }
       debugPrint('✅ [4/4] Proses pengiriman notifikasi selesai.');
     } catch (e) {
       debugPrint('❌ Terjadi kesalahan fatal pada fungsi darurat: $e');
