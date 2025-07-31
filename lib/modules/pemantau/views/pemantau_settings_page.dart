@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class PenyandangSettingsPage extends StatelessWidget {
-  const PenyandangSettingsPage({super.key});
+class PemantauSettingsPage extends StatelessWidget {
+  const PemantauSettingsPage({super.key});
 
   Future<void> _confirmLogout(BuildContext context) async {
     final confirm = await showDialog<bool>(
