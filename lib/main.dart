@@ -10,6 +10,7 @@ import 'package:sightway_mobile/modules/guest/views/welcome_page.dart';
 import 'package:sightway_mobile/modules/penyandang/views/penyandang_index_page.dart';
 import 'package:sightway_mobile/modules/penyandang/views/penyandang_mail_page.dart';
 import 'package:sightway_mobile/modules/penyandang/views/qr_scanner_page.dart';
+import 'package:sightway_mobile/modules/pemantau/views/pemantau_index_page.dart';
 import 'package:sightway_mobile/services/firebase_service.dart';
 import 'package:sightway_mobile/shared/constants/colors.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -64,7 +65,7 @@ void main() async {
   // Ambil initial route berdasarkan shared preferences
   final initialRoute = await getInitialRoute();
 
-  runApp(MyApp(initialRoute: initialRoute));
+  runApp(MyApp(initialRoute: '/pemantau'));
 }
 
 Future<String> getInitialRoute() async {
@@ -121,7 +122,7 @@ class MyApp extends StatelessWidget {
 
         // Tambahkan nanti halaman pemantau kalau ada
         '/pemantau': (context) =>
-            const Placeholder(), // ganti dengan halaman sebenarnya
+            const PemantauIndexPage(), // ganti dengan halaman sebenarnya
 
         '/mail': (context) => const PenyandangMailPage(),
       },

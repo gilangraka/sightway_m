@@ -51,7 +51,7 @@ class _PenyandangHomePageState extends State<PenyandangHomePage> {
         keluargaList = data
             .map(
               (e) => {
-                'name': e['pemantau__user__name'],
+                'name': e['penyandang__user__name'],
                 'status': e['status'],
                 'detail_status': e['detail_status'],
               },

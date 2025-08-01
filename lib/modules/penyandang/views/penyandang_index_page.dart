@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sightway_mobile/modules/penyandang/views/penyandang_home_page.dart';
+import 'package:sightway_mobile/modules/penyandang/views/penyandang_pemantau_page.dart';
+import 'package:sightway_mobile/modules/penyandang/views/penyandang_settings_page.dart';
 import 'package:sightway_mobile/services/dio_service.dart';
 import 'package:sightway_mobile/services/emergency_service.dart';
 import 'package:sightway_mobile/shared/widgets/navigations/bottom_navigation.dart';
@@ -336,8 +338,8 @@ class _PenyandangIndexPageState extends State<PenyandangIndexPage> {
 
   final List<Widget> _pages = [
     const PenyandangHomePage(),
-    const Center(child: Text('Pemantau Page')),
-    const Center(child: Text('Settings Page')),
+    const PenyandangPemantauPage(),
+    const PenyandangSettingsPage(),
   ];
 
   void _onItemTapped(int index) {
