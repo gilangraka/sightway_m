@@ -1,4 +1,7 @@
+import 'dart:isolate';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sightway_mobile/modules/guest/views/login_page.dart';
@@ -9,12 +12,54 @@ import 'package:sightway_mobile/modules/penyandang/views/penyandang_mail_page.da
 import 'package:sightway_mobile/modules/penyandang/views/qr_scanner_page.dart';
 import 'package:sightway_mobile/services/firebase_service.dart';
 import 'package:sightway_mobile/shared/constants/colors.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
+
+@pragma('vm:entry-point')
+void startCallback() {
+  FlutterForegroundTask.setTaskHandler(MyTaskHandler());
+}
+
+class MyTaskHandler extends TaskHandler {
+  @override
+  Future<void> onStart(DateTime timestamp, TaskStarter taskStarter) async {
+    // Inisialisasi saat service mulai
+    print("Foreground service started");
+  }
+
+  @override
+  Future<void> onRepeatEvent(DateTime timestamp) async {
+    // Aksi berkala tiap beberapa detik
+    print("Foreground service is running: $timestamp");
+  }
+
+  @override
+  Future<void> onDestroy(DateTime timestamp, bool isCancelled) async {
+    print("Foreground service destroyed");
+  }
+
+  @override
+  void onButtonPressed(String id) {
+    print('Button pressed: $id');
+  }
+
+  @override
+  void onNotificationPressed() {
+    FlutterForegroundTask.launchApp();
+  }
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  await FlutterForegroundTask.startService(
+    notificationTitle: 'Aplikasi Berjalan',
+    notificationText: 'Menjalankan layanan latar depan.',
+    callback: startCallback,
+  );
+
   await Permission.location.request();
   await FirebaseService.init();
+  WakelockPlus.enable();
 
   // Ambil initial route berdasarkan shared preferences
   final initialRoute = await getInitialRoute();

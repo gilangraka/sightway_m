@@ -43,6 +43,7 @@ class _PenyandangIndexPageState extends State<PenyandangIndexPage> {
   String _statusMessage = 'Menginisialisasi...';
   String _lastTranscription = '';
   String _predictionResult = '';
+  String _transcriptionBuffer = '';
 
   // --- Subscriptions ---
   StreamSubscription? _stateSubscription;
@@ -125,15 +126,18 @@ class _PenyandangIndexPageState extends State<PenyandangIndexPage> {
     );
 
     _resultSubscription = _stt.onResultChanged.listen((result) {
-      if (!mounted) return;
-      final transcribedText = result.text;
+      final transcribedText = result.text.trim();
+
+      if (transcribedText.isEmpty) return;
+
+      // Gabungkan hasil STT ke buffer
+      _transcriptionBuffer += ' $transcribedText';
+
       setState(() {
-        _lastTranscription = transcribedText;
+        _lastTranscription = _transcriptionBuffer.trim();
       });
 
-      if (transcribedText.trim().isEmpty) return;
-
-      _startOrResetTimers(transcribedText);
+      _startOrResetTimers(_transcriptionBuffer.trim());
     });
 
     _stt.start();
@@ -200,6 +204,8 @@ class _PenyandangIndexPageState extends State<PenyandangIndexPage> {
     _maxDurationTimer?.cancel();
     _debounce = null;
     _maxDurationTimer = null;
+    _transcriptionBuffer = ''; // RESET buffer
+
     setState(() {
       _statusMessage = 'Mendengarkan...';
       _lastTranscription = '';

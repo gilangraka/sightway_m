@@ -10,6 +10,15 @@ class EmergencyDetectionService {
   late List<double> _idf;
   bool _isInitialized = false;
 
+  final List<String> _safePhrases = [
+    "tolong ambilkan",
+    "tolong bawakan",
+    "tolong bukakan",
+    "tolong bantu ambilkan",
+    "tolong ambilkan saya makan",
+    "tolong buka pintu",
+  ];
+
   // Method untuk inisialisasi model dan assets
   Future<void> initialize() async {
     if (_isInitialized) return;
@@ -72,13 +81,31 @@ class EmergencyDetectionService {
       );
     }
 
+    // --- Filter Frasa Aman ---
+    final lowerText = text.toLowerCase();
+    final List<String> _safePhrases = [
+      "tolong ambilkan",
+      "tolong bawakan",
+      "tolong bukakan",
+      "tolong bantu ambilkan",
+      "tolong ambilkan saya makan",
+      "tolong buka pintu",
+    ];
+
+    for (final phrase in _safePhrases) {
+      if (lowerText.contains(phrase)) {
+        print(
+          "⚠️ Frasa aman terdeteksi: \"$phrase\" → dianggap bukan darurat.",
+        );
+        return 0.0; // Nilai prediksi paksa rendah
+      }
+    }
+
     // 1. Ubah teks menjadi vektor fitur (TF-IDF)
     final inputVector = _vectorizeText(text);
 
     // 2. Siapkan input dan output untuk model TFLite
-    // Model kita mengharapkan input shape [1, 5000] atau [1, vocabulary_size]
     final input = [inputVector];
-    // Model kita menghasilkan output shape [1, 1] (satu nilai float)
     final output = List.filled(1 * 1, 0.0).reshape([1, 1]);
 
     // 3. Jalankan interpreter
