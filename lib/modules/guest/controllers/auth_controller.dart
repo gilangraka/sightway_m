@@ -55,7 +55,7 @@ class AuthController {
           );
         } else {
           await FirebaseService.sendDataPemantauToFirebase(
-            user['id'],
+            user['id'].toString(),
             user['name'],
             user['email'],
             fcmToken ?? '',

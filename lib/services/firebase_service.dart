@@ -61,32 +61,6 @@ class FirebaseService {
     });
   }
 
-  /// Kirim data penyandang ke Realtime Database
-  static Future<void> sendDataPenyandangToFirebase(
-    String userId,
-    String nama,
-    String email,
-    String fcmToken,
-  ) async {
-    try {
-      final penyandangRef = _db.child('penyandang').child(userId);
-
-      await penyandangRef.set({
-        'status': 'normal',
-        'nama': nama,
-        'email': email,
-        'fcm_token': fcmToken,
-        'invitations': {},
-        'emergency_logs': {},
-      });
-
-      debugPrint('✅ Data penyandang berhasil dikirim ke Firebase');
-    } catch (e) {
-      debugPrint('❌ Gagal mengirim data penyandang: $e');
-      rethrow;
-    }
-  }
-
   static Future<void> sendInvitations(
     String penyandangUserId,
     String pemantauUserId,
@@ -162,6 +136,32 @@ class FirebaseService {
     }
   }
 
+  /// Kirim data penyandang ke Realtime Database
+  static Future<void> sendDataPenyandangToFirebase(
+    String userId,
+    String nama,
+    String email,
+    String fcmToken,
+  ) async {
+    try {
+      final penyandangRef = _db.child('penyandang').child(userId);
+
+      await penyandangRef.set({
+        'status': 'normal',
+        'nama': nama,
+        'email': email,
+        'fcm_token': fcmToken,
+        'invitations': {},
+        'emergency_logs': {},
+      });
+
+      debugPrint('✅ Data penyandang berhasil dikirim ke Firebase');
+    } catch (e) {
+      debugPrint('❌ Gagal mengirim data penyandang: $e');
+      rethrow;
+    }
+  }
+
   static Future<void> sendDataPemantauToFirebase(
     String userId,
     String nama,
@@ -169,8 +169,7 @@ class FirebaseService {
     String fcmToken,
   ) async {
     try {
-      final timestamp = DateTime.now().millisecondsSinceEpoch.toString();
-      final pemantauRef = _db.child('pemantau').child(timestamp);
+      final pemantauRef = _db.child('pemantau').child(userId);
 
       await pemantauRef.set({
         'user_id': userId,
@@ -179,9 +178,7 @@ class FirebaseService {
         'fcm_token': fcmToken,
       });
 
-      debugPrint(
-        '✅ Data pemantau berhasil dikirim ke Firebase dengan timestamp: $timestamp',
-      );
+      debugPrint('✅ Data pemantau berhasil dikirim ke Firebase');
     } catch (e) {
       debugPrint('❌ Gagal mengirim data pemantau: $e');
       rethrow;
