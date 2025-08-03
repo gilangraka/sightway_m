@@ -26,19 +26,20 @@ class _PemantauPenyandangPageState extends State<PemantauPenyandangPage> {
       );
       final List data = res.data['data'];
 
-      final List<Map<String, String>> loadedList = data
-          .map<Map<String, String>>((item) {
-            return {
-              'name': item['penyandang__user__name'] ?? '',
-              'email': item['penyandang__user__email'] ?? '',
-              'hubungan': '-', // jika tidak ada di response, bisa dikosongkan
-              'lokasi': '-', // dummy karena tidak tersedia
-              'status': item['status'] ?? '',
-              'detail_status': item['detail_status'] ?? '',
-            };
-          })
-          .toList();
+      final List<Map<String, String>>
+      loadedList = data.map<Map<String, String>>((item) {
+        return {
+          'penyandang_user_id': item['penyandang__user__id'].toString() ?? '',
+          'name': item['penyandang__user__name'] ?? '',
+          'email': item['penyandang__user__email'] ?? '',
+          'hubungan': '-', // jika tidak ada di response, bisa dikosongkan
+          'lokasi': '-', // dummy karena tidak tersedia
+          'status': item['status'] ?? '',
+          'detail_status': item['detail_status'] ?? '',
+        };
+      }).toList();
 
+      if (!mounted) return;
       setState(() {
         _penyandangList.clear();
         _penyandangList.addAll(loadedList);
@@ -310,6 +311,8 @@ class _PemantauPenyandangPageState extends State<PemantauPenyandangPage> {
                           detailStatus: item['detail_status'] ?? '',
                           imgUrl:
                               'https://yfgbsigquyriibzovooi.supabase.co/storage/v1/object/public/sightway/post/logo-blank.png',
+                          penyandangUserId:
+                              item['penyandang_user_id'].toString() ?? '',
                         ),
                       );
                     },

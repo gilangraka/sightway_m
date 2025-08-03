@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sightway_mobile/services/dio_client.dart';
 import 'package:sightway_mobile/services/firebase_service.dart';
 import 'package:sightway_mobile/shared/widgets/cards/emergency_card.dart';
+import 'package:sightway_mobile/shared/widgets/cards/keluarga_pemantau_card.dart';
 import 'package:sightway_mobile/shared/widgets/cards/keluarga_penyandang_card.dart';
 import 'package:sightway_mobile/shared/widgets/navigations/custom_app_bar.dart';
 import 'package:sightway_mobile/shared/widgets/users/welcome_header.dart';
@@ -81,6 +82,7 @@ class _PemantauHomePageState extends State<PemantauHomePage> {
         penyandangList = data
             .map(
               (e) => {
+                'penyandang_user_id': e['penyandang__user__id'],
                 'name': e['penyandang__user__name'],
                 'status': e['status'],
                 'detail_status': e['detail_status'],
@@ -175,12 +177,13 @@ class _PemantauHomePageState extends State<PemantauHomePage> {
         final penyandang = penyandangList[index];
         return Padding(
           padding: const EdgeInsets.only(bottom: 12.0),
-          child: KeluargaPenyandangCard(
+          child: KeluargaPemantauCard(
             name: penyandang['name'],
             status: penyandang['status'],
             detailStatus: penyandang['detail_status'],
             imgUrl:
                 "https://yfgbsigquyriibzovooi.supabase.co/storage/v1/object/public/sightway/post/logo-blank.png",
+            penyandangUserId: penyandang['penyandang_user_id'].toString() ?? '',
           ),
         );
       },

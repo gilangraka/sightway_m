@@ -299,6 +299,28 @@ class FirebaseService {
     }
   }
 
+  static Future<String?> getPenyandangStatus(String userId) async {
+    try {
+      final statusSnapshot = await _db
+          .child('penyandang')
+          .child(userId)
+          .child('status')
+          .get();
+
+      if (!statusSnapshot.exists) {
+        // Data tidak ditemukan, berarti user belum login di perangkat
+        print('User belum login: $userId');
+        return null;
+      }
+
+      final status = statusSnapshot.value?.toString();
+      return status;
+    } catch (e) {
+      print('Error saat mengambil status penyandang: $e');
+      return null;
+    }
+  }
+
   Future<List<Map<String, dynamic>>> getListPushNotification(
     String userId,
   ) async {
