@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
+import 'package:sightway_mobile/services/dio_client.dart';
+import 'package:sightway_mobile/services/firebase_service.dart';
+import 'package:sightway_mobile/shared/widgets/cards/invitation_card.dart';
 import 'package:sightway_mobile/shared/widgets/cards/keluarga_penyandang_card.dart';
 import 'package:sightway_mobile/modules/penyandang/widgets/keluarga_penyandang_empty.dart';
 import 'package:sightway_mobile/shared/widgets/inputs/search_input_field.dart';
@@ -14,32 +18,58 @@ class PenyandangPemantauPage extends StatefulWidget {
 class _PenyandangPemantauPageState extends State<PenyandangPemantauPage> {
   final TextEditingController _searchController = TextEditingController();
 
-  final List<Map<String, String>> _pemantauList = [
-    {
-      'name': 'Dina',
-      'email': 'dina@example.com',
-      'hubungan': 'Kakak',
-      'lokasi': 'Yogyakarta',
-      'status': 'Aktif',
-      'detail_status': 'Terhubung',
-    },
-    {
-      'name': 'Fajar',
-      'email': 'fajar@example.com',
-      'hubungan': 'Teman',
-      'lokasi': 'Jakarta Selatan',
-      'status': 'Aktif',
-      'detail_status': 'Menunggu konfirmasi',
-    },
-  ];
-
-  List<Map<String, String>> _filteredList = [];
+  final List<Map<String, String>> _pemantauList = [];
+  List<Map<String, dynamic>> _filteredList = [];
 
   @override
   void initState() {
     super.initState();
-    _filteredList = List.from(_pemantauList);
     _searchController.addListener(_onSearchChanged);
+    fetchPemantauList();
+    fetchInvitations();
+  }
+
+  List<Map<String, dynamic>> _invitations = [];
+
+  Future<void> fetchInvitations() async {
+    final data = await FirebaseService.getInvitations();
+    setState(() {
+      _invitations = data;
+    });
+  }
+
+  Future<void> fetchPemantauList() async {
+    try {
+      final res = await DioClient.client.get(
+        '/mobile/penyandang/list-pemantau',
+      );
+      final List data = res.data['data'];
+
+      final List<Map<String, String>> loadedList = data
+          .map<Map<String, String>>((item) {
+            return {
+              'name': item['pemantau__user__name'] ?? '',
+              'email': item['pemantau__user__email'] ?? '',
+              'status': item['status'] ?? '',
+              'detail_status': item['detail_status'] ?? '',
+              'user_id': item['user_id'] ?? '',
+            };
+          })
+          .toList();
+
+      setState(() {
+        _pemantauList.clear();
+        _pemantauList.addAll(loadedList);
+        _filteredList = List.from(_pemantauList);
+      });
+    } on DioException catch (e) {
+      debugPrint('❌ Gagal mengambil pemantau: ${e.message}');
+      // Optional: Tampilkan error UI atau snack bar
+      setState(() {
+        _pemantauList.clear();
+        _filteredList.clear();
+      });
+    }
   }
 
   void _onSearchChanged() {
@@ -62,8 +92,7 @@ class _PenyandangPemantauPageState extends State<PenyandangPemantauPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
-      appBar: CustomAppBar(
+      appBar: const CustomAppBar(
         title: 'Pemantau yang Terhubung',
         showBackButton: false,
       ),
@@ -76,6 +105,32 @@ class _PenyandangPemantauPageState extends State<PenyandangPemantauPage> {
               hint: 'Cari nama...',
             ),
           ),
+
+          if (_invitations.isNotEmpty)
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: _invitations.length,
+                itemBuilder: (context, index) {
+                  final invitation = _invitations[index];
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12.0),
+                    child: InvitationCard(
+                      name: invitation['pemantau_name'] ?? '-',
+                      email: invitation['pemantau_email'] ?? '-',
+                      status: invitation['status_pemantau'] ?? '-',
+                      detailStatus: invitation['detail_status'] ?? '-',
+                      pemantau_id: invitation['user_id'] ?? '-',
+                      onActionComplete: () => {
+                        fetchInvitations(),
+                        fetchPemantauList(),
+                      },
+                    ),
+                  );
+                },
+              ),
+            ),
+
           Expanded(
             child: _filteredList.isEmpty
                 ? const KeluargaPenyandangEmpty()

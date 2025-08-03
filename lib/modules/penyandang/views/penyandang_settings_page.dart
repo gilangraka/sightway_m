@@ -38,7 +38,6 @@ class PenyandangSettingsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(title: 'Pengaturan', showBackButton: false),
-      backgroundColor: Colors.grey[100],
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [

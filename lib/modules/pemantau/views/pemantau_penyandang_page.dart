@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sightway_mobile/services/dio_client.dart';
+import 'package:sightway_mobile/services/firebase_service.dart';
 import 'package:sightway_mobile/shared/constants/colors.dart';
 import 'package:sightway_mobile/shared/widgets/cards/keluarga_pemantau_card.dart';
 import 'package:sightway_mobile/modules/pemantau/widgets/keluarga_pemantau_empty.dart';
@@ -123,16 +125,26 @@ class _PemantauPenyandangPageState extends State<PemantauPenyandangPage> {
               if (penyandangData == null || selectedStatus == null) return;
 
               try {
-                await DioClient.client.post(
-                  '/mobile/pemantau/add-invitation-penyandang',
-                  data: {
-                    "penyandang_id": penyandangData!['id'],
-                    "status_pemantau": selectedStatus,
-                    "detail_status_pemantau": detailStatusController.text
-                        .trim(),
-                  },
+                final prefs = await SharedPreferences.getInstance();
+                FirebaseService.sendInvitations(
+                  penyandangData!['user_id'].toString(),
+                  prefs.getString('user_id')!,
+                  prefs.getString('user_name')!,
+                  prefs.getString('user_email')!,
+                  selectedStatus!,
+                  detailStatusController.text.trim(),
                 );
                 Navigator.of(context).pop(); // Close modal
+
+                // ✅ Tampilkan notifikasi berhasil
+                ScaffoldMessenger.of(this.context).showSnackBar(
+                  SnackBar(
+                    content: const Text('✅ Berhasil mengundang penyandang'),
+                    backgroundColor: AppColors.primary,
+                    behavior: SnackBarBehavior.floating,
+                    duration: const Duration(seconds: 3),
+                  ),
+                );
                 // TODO: Refresh data if needed
               } on DioException catch (e) {
                 // Optional: handle server error here
@@ -269,6 +281,8 @@ class _PemantauPenyandangPageState extends State<PemantauPenyandangPage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showSearchModal(context),
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.white, // warna ikon di dalam tombol
         child: const Icon(Icons.add),
       ),
       body: Column(

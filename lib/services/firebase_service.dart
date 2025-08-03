@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sightway_mobile/services/dio_client.dart';
 import 'package:sightway_mobile/services/dio_service.dart';
 import 'package:sightway_mobile/services/supabase_service.dart';
@@ -70,7 +71,11 @@ class FirebaseService {
     String detailStatus,
   ) async {
     try {
-      final timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+      final timestamp = DateTime.now()
+          .toUtc()
+          .add(const Duration(hours: 7))
+          .millisecondsSinceEpoch
+          .toString();
       final invitationRef = _db
           .child('penyandang')
           .child(penyandangUserId)
@@ -86,11 +91,72 @@ class FirebaseService {
         'status': 'pending',
       });
 
+      // Ambil FCM Token
+      final fcmSnapshot = await _db
+          .child('penyandang')
+          .child(penyandangUserId)
+          .child('fcm_token')
+          .get();
+
+      if (fcmSnapshot.exists) {
+        final fcmToken = fcmSnapshot.value;
+
+        await DioClient.client.post(
+          '/send-fcm/',
+          data: {
+            'token': fcmToken,
+            'title': 'Invitations!',
+            'body': 'Pemantau dengan nama $pemantauName mengundang anda',
+            'user_id': penyandangUserId,
+          },
+        );
+      }
+
       debugPrint(
         '✅ Invitation berhasil ditambahkan ke penyandang $penyandangUserId',
       );
     } catch (e) {
       debugPrint('❌ Gagal menambahkan invitation: $e');
+      rethrow;
+    }
+  }
+
+  static Future<List<Map<String, dynamic>>> getInvitations() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString('user_id');
+      print('✅ User ID dari prefs: $userId');
+
+      if (userId == null) throw 'User ID tidak ditemukan di prefs';
+
+      final snapshot = await _db
+          .child('penyandang')
+          .child(userId)
+          .child('invitations')
+          .get();
+
+      if (!snapshot.exists) return [];
+
+      final Map data = snapshot.value as Map;
+      final List<Map<String, dynamic>> invitations = [];
+
+      data.forEach((key, value) {
+        if (value is Map) {
+          invitations.add({
+            'timestamp': key,
+            'user_id': value['user_id'],
+            'pemantau_name': value['pemantau_name'],
+            'pemantau_email': value['pemantau_email'],
+            'status_pemantau': value['status_pemantau'],
+            'detail_status': value['detail_status'],
+            'status': value['status'],
+          });
+        }
+      });
+
+      return invitations;
+    } catch (e) {
+      debugPrint('❌ Gagal mengambil invitations: $e');
       rethrow;
     }
   }
@@ -119,7 +185,26 @@ class FirebaseService {
             final invitationRef = invitationsRef.child(key);
             await invitationRef.update({'status': newStatus});
 
-            // Nanti disini ditambahkan, ketika status == accepted, maka hit API untuk menambah data penyandang_pemantau
+            // Jika accepted, kirim data ke server
+            if (newStatus == "accepted") {
+              final payload = {
+                'pemantau_id': pemantauId,
+                'status_pemantau':
+                    value['status_pemantau']?.toString().toLowerCase() ?? '',
+                'detail_status_pemantau': value['detail_status'] ?? '',
+              };
+
+              final response = await DioClient.client.post(
+                '/mobile/penyandang/accept-invitation',
+                data: payload,
+              );
+
+              debugPrint('📡 API response: ${response.data}');
+            }
+
+            // Hapus invitation apapun statusnya (accepted / rejected)
+            await invitationRef.remove();
+            debugPrint('🗑️ Invitation berhasil dihapus dari Firebase');
 
             debugPrint('✅ Invitation berhasil diupdate: $newStatus');
             return;
@@ -131,7 +216,7 @@ class FirebaseService {
         debugPrint('⚠️ Tidak ada invitation untuk penyandang $penyandangId');
       }
     } catch (e) {
-      debugPrint('❌ Gagal mengupdate invitation: $e');
+      debugPrint('❌ Gagal mengupdate/hapus invitation: $e');
       rethrow;
     }
   }
@@ -146,13 +231,11 @@ class FirebaseService {
     try {
       final penyandangRef = _db.child('penyandang').child(userId);
 
-      await penyandangRef.set({
+      await penyandangRef.update({
         'status': 'normal',
         'nama': nama,
         'email': email,
         'fcm_token': fcmToken,
-        'invitations': {},
-        'emergency_logs': {},
       });
 
       debugPrint('✅ Data penyandang berhasil dikirim ke Firebase');
@@ -171,7 +254,7 @@ class FirebaseService {
     try {
       final pemantauRef = _db.child('pemantau').child(userId);
 
-      await pemantauRef.set({
+      await pemantauRef.update({
         'user_id': userId,
         'nama': nama,
         'email': email,
