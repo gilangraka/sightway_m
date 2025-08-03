@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sightway_mobile/shared/constants/colors.dart';
 import 'package:sightway_mobile/shared/widgets/navigations/custom_app_bar.dart';
 
 class PenyandangSettingsPage extends StatelessWidget {
@@ -46,7 +47,7 @@ class PenyandangSettingsPage extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Colors.redAccent,
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
@@ -58,12 +59,12 @@ class PenyandangSettingsPage extends StatelessWidget {
               ),
               child: Row(
                 children: const [
-                  Icon(Icons.logout, color: Colors.red),
+                  Icon(Icons.logout, color: AppColors.white),
                   SizedBox(width: 12),
                   Text(
                     'Logout',
                     style: TextStyle(
-                      color: Colors.red,
+                      color: AppColors.white,
                       fontWeight: FontWeight.w500,
                       fontSize: 16,
                     ),

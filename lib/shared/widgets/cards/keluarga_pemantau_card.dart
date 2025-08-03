@@ -20,7 +20,7 @@ class KeluargaPemantauCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.grey.shade100,
         borderRadius: BorderRadius.circular(16),
       ),
       child: CardRelatedUser(

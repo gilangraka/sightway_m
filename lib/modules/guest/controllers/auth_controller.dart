@@ -42,6 +42,10 @@ class AuthController {
         await prefs.setString('user_name', user['name']);
         await prefs.setString('user_email', user['email']);
         await prefs.setString('user_role', user['roles'][0]['name']);
+
+        String? user_role = prefs.getString('user_role');
+        print("Role: $user_role");
+
         // ✅ Ambil token FCM
         final fcmToken = await FirebaseMessaging.instance.getToken();
 
@@ -131,6 +135,7 @@ class AuthController {
         await prefs.setString('token', token);
         await prefs.setString('user_name', data['user']['name']);
         await prefs.setString('user_email', data['user']['email']);
+        await prefs.setString('user_role', data['user']['roles'][0]['name']);
 
         _showSnackbar(context, 'Registrasi berhasil!', AppColors.primary);
         Navigator.pushReplacementNamed(context, '/login');

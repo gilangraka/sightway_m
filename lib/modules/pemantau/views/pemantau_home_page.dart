@@ -2,6 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sightway_mobile/services/dio_client.dart';
+import 'package:sightway_mobile/services/firebase_service.dart';
+import 'package:sightway_mobile/shared/widgets/cards/emergency_card.dart';
 import 'package:sightway_mobile/shared/widgets/cards/keluarga_penyandang_card.dart';
 import 'package:sightway_mobile/shared/widgets/navigations/custom_app_bar.dart';
 import 'package:sightway_mobile/shared/widgets/users/welcome_header.dart';
@@ -18,12 +20,14 @@ class _PemantauHomePageState extends State<PemantauHomePage> {
   List<Map<String, dynamic>> penyandangList = [];
   bool _isLoading = true;
   String? _error;
+  String? _penyandangDarurat;
 
   @override
   void initState() {
     super.initState();
     _loadUserName();
     _fetchPenyandang();
+    _getFirstPenyandangDarurat();
   }
 
   Future<void> _loadUserName() async {
@@ -31,6 +35,34 @@ class _PemantauHomePageState extends State<PemantauHomePage> {
     setState(() {
       userName = prefs.getString('user_name') ?? 'Pemantau';
     });
+  }
+
+  Future<void> _getFirstPenyandangDarurat() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final response = await DioClient.client.get(
+        '/mobile/pemantau/list-penyandang',
+      );
+      final List<dynamic> data = response.data['data'];
+
+      final List<int> penyandangIds = data
+          .map<int>((item) => item['penyandang__user__id'] as int)
+          .toList();
+
+      final String? penyandangDarurat =
+          await FirebaseService.getEmergencyPenyandang(penyandangIds);
+
+      setState(() {
+        _penyandangDarurat = penyandangDarurat;
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('❌ Error _getFirstPenyandangDarurat: $e');
+    }
   }
 
   Future<void> _fetchPenyandang() async {
@@ -104,38 +136,8 @@ class _PemantauHomePageState extends State<PemantauHomePage> {
                 ),
                 const SizedBox(height: 30),
 
-                // Placeholder lokasi
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.deepPurple.shade50,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "Cek Lokasi Penyandang",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        "Tekan tombol di bawah ini untuk melihat posisi terbaru penyandang.",
-                      ),
-                      const SizedBox(height: 12),
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/lokasi');
-                        },
-                        child: const Text("Lihat Lokasi"),
-                      ),
-                    ],
-                  ),
-                ),
+                _penampilanKartuDarurat(),
+
                 const SizedBox(height: 30),
 
                 const Text(
@@ -183,5 +185,17 @@ class _PemantauHomePageState extends State<PemantauHomePage> {
         );
       },
     );
+  }
+
+  Widget _penampilanKartuDarurat() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_penyandangDarurat != null) {
+      return EmergencyCard(nama: _penyandangDarurat!);
+    } else {
+      return const NoEmergencyCard();
+    }
   }
 }

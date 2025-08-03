@@ -35,9 +35,9 @@ Future<String> getInitialRoute() async {
     return '/';
   }
 
-  if (role == 'Penyandang') {
+  if (role == 'penyandang') {
     return '/penyandang';
-  } else if (role == 'Pemantau') {
+  } else if (role == 'pemantau') {
     return '/pemantau'; // Pastikan rute ini nanti ada juga
   }
 

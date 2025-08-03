@@ -20,25 +20,6 @@ class WelcomeHeader extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Foto profil
-        ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: Image.network(
-            imgUrl,
-            width: 60,
-            height: 60,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              return Container(
-                width: 60,
-                height: 60,
-                color: Colors.grey[300],
-                child: Icon(Icons.person, color: Colors.grey[600]),
-              );
-            },
-          ),
-        ),
-
         const SizedBox(width: 12),
 
         // Teks dan badge

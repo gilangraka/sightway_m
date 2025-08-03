@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class DioService {
   final Dio _dio;
 
-  static const String _baseUrl = 'http://103.47.225.235:8000';
+  static const String _baseUrl = 'https://api-sightway.dgdev.my.id';
 
   DioService()
     : _dio = Dio(

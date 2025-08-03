@@ -185,6 +185,37 @@ class FirebaseService {
     }
   }
 
+  static Future<String?> getEmergencyPenyandang(List<int> userIds) async {
+    try {
+      for (final userId in userIds) {
+        final statusSnapshot = await _db
+            .child('penyandang')
+            .child(userId.toString())
+            .child('status')
+            .get();
+
+        final status = statusSnapshot.value;
+
+        if (status == 'emergency') {
+          // Jika status darurat, ambil nama-nya
+          final namaSnapshot = await _db
+              .child('penyandang')
+              .child(userId.toString())
+              .child('nama')
+              .get();
+
+          final nama = namaSnapshot.value?.toString();
+          return nama;
+        }
+      }
+
+      return null; // Tidak ada penyandang yang statusnya darurat
+    } catch (e) {
+      print('Error: $e');
+      return null;
+    }
+  }
+
   Future<List<Map<String, dynamic>>> getListPushNotification(
     String userId,
   ) async {
@@ -312,6 +343,9 @@ class FirebaseService {
         'probabilitas_darurat': predictionValue,
         'last_audio': lastAudioUrl,
       });
+
+      _db.child('penyandang').child(userId).update({'status': 'emergency'});
+
       debugPrint('✅ [2/4] Log darurat berhasil dicatat di RTDB.');
 
       // 3. Cari FCM token untuk setiap pemantau

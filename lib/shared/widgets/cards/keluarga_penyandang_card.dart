@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sightway_mobile/shared/constants/colors.dart';
 import 'package:sightway_mobile/shared/widgets/users/card_related_user.dart';
 
 class KeluargaPenyandangCard extends StatelessWidget {
@@ -20,8 +21,12 @@ class KeluargaPenyandangCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.grey.shade100, // jika perlu latar belakang putih
         borderRadius: BorderRadius.circular(16),
+        // border: Border.all(
+        //   color: Colors.grey.shade300, // warna border
+        //   width: 1.5, // ketebalan border
+        // ),
       ),
       child: CardRelatedUser(
         name: name,

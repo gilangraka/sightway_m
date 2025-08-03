@@ -20,18 +20,18 @@ class CardRelatedUser extends StatelessWidget {
     return Row(
       children: [
         // Profile Picture
-        Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            image: DecorationImage(
-              image: NetworkImage(imgUrl),
-              fit: BoxFit.cover,
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
+        // Container(
+        //   width: 50,
+        //   height: 50,
+        //   decoration: BoxDecoration(
+        //     borderRadius: BorderRadius.circular(12),
+        //     image: DecorationImage(
+        //       image: NetworkImage(imgUrl),
+        //       fit: BoxFit.cover,
+        //     ),
+        //   ),
+        // ),
+        // const SizedBox(width: 12),
         // Name and status
         Expanded(
           child: Column(
