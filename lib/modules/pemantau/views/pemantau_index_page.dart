@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sightway_mobile/modules/pemantau/views/pemantau_home_page.dart';
 import 'package:sightway_mobile/modules/pemantau/views/pemantau_settings_page.dart';
+import 'package:sightway_mobile/modules/pemantau/views/pemantau_penyandang_page.dart';
 import 'package:sightway_mobile/shared/widgets/navigations/bottom_navigation.dart';
 
 class PemantauIndexPage extends StatefulWidget {
@@ -15,7 +16,7 @@ class _PemantauIndexPageState extends State<PemantauIndexPage> {
 
   final List<Widget> _pages = [
     const PemantauHomePage(),
-    const Center(child: Text('List Penyandang')),
+    const PemantauPenyandangPage(),
     const PemantauSettingsPage(),
   ];
 
