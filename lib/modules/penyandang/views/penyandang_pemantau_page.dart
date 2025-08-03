@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sightway_mobile/shared/widgets/cards/keluarga_penyandang_card.dart';
 import 'package:sightway_mobile/modules/penyandang/widgets/keluarga_penyandang_empty.dart';
 import 'package:sightway_mobile/shared/widgets/inputs/search_input_field.dart';
+import 'package:sightway_mobile/shared/widgets/navigations/custom_app_bar.dart';
 
 class PenyandangPemantauPage extends StatefulWidget {
   const PenyandangPemantauPage({super.key});
@@ -62,11 +63,9 @@ class _PenyandangPemantauPageState extends State<PenyandangPemantauPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        title: const Text('Pemantau yang Terhubung'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 1,
+      appBar: CustomAppBar(
+        title: 'Pemantau yang Terhubung',
+        showBackButton: false,
       ),
       body: Column(
         children: [

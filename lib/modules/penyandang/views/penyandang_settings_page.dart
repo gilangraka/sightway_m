@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sightway_mobile/shared/widgets/navigations/custom_app_bar.dart';
 
 class PenyandangSettingsPage extends StatelessWidget {
   const PenyandangSettingsPage({super.key});
@@ -35,12 +36,7 @@ class PenyandangSettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Pengaturan'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 1,
-      ),
+      appBar: CustomAppBar(title: 'Pengaturan', showBackButton: false),
       backgroundColor: Colors.grey[100],
       body: ListView(
         padding: const EdgeInsets.all(20),
