@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sightway_mobile/shared/constants/colors.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -13,6 +14,9 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
+      backgroundColor: AppColors.white,
+      scrolledUnderElevation: 0.0,
+      surfaceTintColor: Colors.transparent,
       automaticallyImplyLeading: showBackButton,
       title: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,

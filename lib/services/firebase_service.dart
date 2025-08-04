@@ -321,6 +321,86 @@ class FirebaseService {
     }
   }
 
+  static Future<Map<String, dynamic>?> openPemantauPenyandangDetail(
+    String userId,
+  ) async {
+    try {
+      // 1. Set is_monitored = true
+      await _db.child('penyandang').child(userId).update({
+        'is_monitored': true,
+      });
+
+      // 2. Ambil lat, long & status
+      final snapshot = await _db.child('penyandang').child(userId).once();
+
+      if (!snapshot.snapshot.exists) return null;
+
+      final data = Map<String, dynamic>.from(snapshot.snapshot.value as Map);
+
+      final status = data['status'];
+      final latitude = data['latitude'];
+      final longitude = data['longitude'];
+      final nama = data['nama'];
+      final email = data['email'];
+
+      Map<String, dynamic>? emergencyLog;
+
+      // 3. Jika status == emergency, ambil emergency_logs (ambil satu, first log)
+      if (status == 'emergency') {
+        final logSnap = await _db
+            .child('penyandang')
+            .child(userId)
+            .child('emergency_logs')
+            .once();
+
+        if (logSnap.snapshot.exists) {
+          final logData = Map<String, dynamic>.from(
+            logSnap.snapshot.value as Map,
+          );
+          emergencyLog = logData; // Langsung ambil semuanya
+        }
+      }
+
+      return {
+        'nama': nama,
+        'email': email,
+        'status': status,
+        'latitude': latitude,
+        'longitude': longitude,
+        'emergency_log': emergencyLog,
+      };
+    } catch (e) {
+      print('Error openPemantauPenyandangDetail: $e');
+      return null;
+    }
+  }
+
+  static Future<void> closePemantauPenyandangDetail(String userId) async {
+    try {
+      await _db.child('penyandang').child(userId).update({
+        'is_monitored': false,
+      });
+    } catch (e) {
+      print('Error closePemantauPenyandangDetail: $e');
+    }
+  }
+
+  static Future<void> setNotEmergency(String userId) async {
+    try {
+      // 1. Set status ke normal
+      await _db.child('penyandang').child(userId).update({'status': 'normal'});
+
+      // 2. Hapus emergency_logs
+      await _db
+          .child('penyandang')
+          .child(userId)
+          .child('emergency_logs')
+          .remove();
+    } catch (e) {
+      print('Error setNotEmergency: $e');
+    }
+  }
+
   Future<List<Map<String, dynamic>>> getListPushNotification(
     String userId,
   ) async {

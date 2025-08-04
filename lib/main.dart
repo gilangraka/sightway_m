@@ -7,16 +7,18 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sightway_mobile/modules/guest/views/login_page.dart';
 import 'package:sightway_mobile/modules/guest/views/register_page.dart';
 import 'package:sightway_mobile/modules/guest/views/welcome_page.dart';
+import 'package:sightway_mobile/modules/pemantau/views/pemantau_detail_penyandang.dart';
 import 'package:sightway_mobile/modules/penyandang/views/penyandang_index_page.dart';
 import 'package:sightway_mobile/modules/penyandang/views/penyandang_mail_page.dart';
 import 'package:sightway_mobile/modules/penyandang/views/qr_scanner_page.dart';
 import 'package:sightway_mobile/modules/pemantau/views/pemantau_index_page.dart';
 import 'package:sightway_mobile/services/firebase_service.dart';
 import 'package:sightway_mobile/shared/constants/colors.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
+  await initializeDateFormatting('id_ID', null);
   await Permission.location.request();
   await FirebaseService.init();
 
@@ -74,15 +76,25 @@ class MyApp extends StatelessWidget {
         '/': (context) => const WelcomePage(),
         '/login': (context) => const LoginPage(),
         '/register': (context) => const RegisterPage(),
-
         '/penyandang': (context) => const PenyandangIndexPage(),
         '/scan-qr': (context) => const QrScannerPage(),
-
-        // Tambahkan nanti halaman pemantau kalau ada
-        '/pemantau': (context) =>
-            const PemantauIndexPage(), // ganti dengan halaman sebenarnya
-
+        '/pemantau': (context) => const PemantauIndexPage(),
         '/mail': (context) => const PenyandangMailPage(),
+      },
+      onGenerateRoute: (settings) {
+        final uri = Uri.parse(settings.name ?? '');
+
+        if (uri.pathSegments.length == 3 &&
+            uri.pathSegments[0] == 'pemantau' &&
+            uri.pathSegments[1] == 'detail-penyandang') {
+          final userId = uri.pathSegments[2];
+          return MaterialPageRoute(
+            builder: (_) => PemantauDetailPenyandangPage(userId: userId),
+          );
+        }
+
+        // fallback
+        return null;
       },
     );
   }

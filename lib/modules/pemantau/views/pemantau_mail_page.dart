@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sightway_mobile/shared/constants/colors.dart';
 import 'package:sightway_mobile/shared/widgets/cards/list_notification_card.dart';
 import 'package:sightway_mobile/shared/widgets/navigations/custom_app_bar.dart';
 
@@ -22,6 +23,7 @@ class PemantauMailPage extends StatelessWidget {
     ];
 
     return Scaffold(
+      backgroundColor: AppColors.white,
       appBar: CustomAppBar(title: "Notifikasi"),
       body: SafeArea(
         child: Padding(

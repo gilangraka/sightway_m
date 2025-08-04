@@ -42,6 +42,7 @@ class _CardRelatedUser2State extends State<CardRelatedUser2> {
   }
 
   @override
+  @override
   Widget build(BuildContext context) {
     final String formattedStatus =
         '${widget.status[0].toUpperCase()}${widget.status.substring(1).toLowerCase()}';
@@ -49,49 +50,70 @@ class _CardRelatedUser2State extends State<CardRelatedUser2> {
     final String formattedFirebaseStatus =
         '${firebaseStatus[0].toUpperCase()}${firebaseStatus.substring(1).toLowerCase()}';
 
-    return Row(
-      children: [
-        // Name and status
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                widget.name,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
+    return InkWell(
+      onTap: () {
+        if (firebaseStatus.toLowerCase() == "offline") {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text("Penyandang sedang offline"),
+              backgroundColor: Colors.grey[700],
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
               ),
-              Text(
-                formattedFirebaseStatus,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: formattedFirebaseStatus.toLowerCase() == 'emergency'
-                      ? Colors.red
-                      : Colors.grey,
+            ),
+          );
+          return; // Tidak melakukan navigasi
+        }
+
+        Navigator.pushNamed(
+          context,
+          '/pemantau/detail-penyandang/${widget.userId}',
+        );
+      },
+
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.name,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ),
-        // Detail status (like location tag)
-        Container(
-          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
-          decoration: BoxDecoration(
-            color: AppColors.primary,
-            borderRadius: BorderRadius.circular(50),
-          ),
-          child: Text(
-            "${formattedStatus} - ${widget.detailStatus}",
-            style: const TextStyle(
-              color: AppColors.background,
-              fontSize: 10,
-              fontWeight: FontWeight.w500,
+                Text(
+                  formattedFirebaseStatus,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: formattedFirebaseStatus.toLowerCase() == 'emergency'
+                        ? Colors.red
+                        : Colors.grey,
+                  ),
+                ),
+              ],
             ),
           ),
-        ),
-      ],
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              borderRadius: BorderRadius.circular(50),
+            ),
+            child: Text(
+              "$formattedStatus - ${widget.detailStatus}",
+              style: const TextStyle(
+                color: AppColors.background,
+                fontSize: 10,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
