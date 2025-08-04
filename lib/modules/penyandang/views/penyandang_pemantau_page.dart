@@ -33,6 +33,7 @@ class _PenyandangPemantauPageState extends State<PenyandangPemantauPage> {
 
   Future<void> fetchInvitations() async {
     final data = await FirebaseService.getInvitations();
+    if (!mounted) return;
     setState(() {
       _invitations = data;
     });

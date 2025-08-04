@@ -411,9 +411,10 @@ class _PemantauDetailPenyandangPageState
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    onPressed: (latitude == null || longitude == null)
-                        ? null
-                        : _launchGoogleMaps,
+                    onPressed: () async {
+                      await FirebaseService.setNotEmergency(widget.userId);
+                      // Tidak perlu setState di sini karena stream listener akan otomatis trigger
+                    },
                   ),
                 ),
 

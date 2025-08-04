@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sightway_mobile/modules/penyandang/widgets/blindstick_empty.dart';
 import 'package:sightway_mobile/services/dio_client.dart';
+import 'package:sightway_mobile/shared/constants/const.dart'; // Asumsi Anda punya file ini untuk AppColors
 import 'package:sightway_mobile/shared/widgets/cards/keluarga_penyandang_card.dart';
 import 'package:sightway_mobile/shared/widgets/navigations/custom_app_bar.dart';
 import 'package:sightway_mobile/shared/widgets/users/welcome_header.dart';
@@ -20,24 +21,71 @@ class _PenyandangHomePageState extends State<PenyandangHomePage> {
   bool _isLoading = true;
   String? _error;
 
+  // --- STATE BARU UNTUK BLINDSTICK ---
+  bool? _isBlindstickConnected; // null = loading, true = connected, false = not
+  String? _blindstickMacAddress;
+
   @override
   void initState() {
     super.initState();
-    _loadUserName();
-    _fetchKeluarga();
+    _loadInitialData();
+  }
+
+  // Menggabungkan semua pemanggilan data awal
+  Future<void> _loadInitialData() async {
+    // Memanggil semua fetch secara bersamaan untuk efisiensi
+    await Future.wait([
+      _loadUserName(),
+      _fetchKeluarga(),
+      _checkBlindstickStatus(),
+    ]);
+
+    // Set loading ke false setelah semua data selesai dimuat
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   Future<void> _loadUserName() async {
     final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      userName = prefs.getString('user_name') ?? 'Pengguna';
-    });
+    if (mounted) {
+      setState(() {
+        userName = prefs.getString('user_name') ?? 'Pengguna';
+      });
+    }
+  }
+
+  // --- FUNGSI BARU UNTUK CEK STATUS BLINDSTICK ---
+  Future<void> _checkBlindstickStatus() async {
+    try {
+      final response = await DioClient.client.get(
+        '/mobile/penyandang/check-blindstick',
+      );
+
+      if (mounted) {
+        setState(() {
+          _isBlindstickConnected = response.data['connected'];
+          if (_isBlindstickConnected == true) {
+            _blindstickMacAddress = response.data['mac_address'];
+          }
+        });
+      }
+    } catch (e) {
+      // Jika terjadi error (koneksi, server error, dll), anggap saja tidak terhubung
+      print('KESALAHAN SAAT CEK BLINDSTICK: $e');
+      if (mounted) {
+        setState(() {
+          _isBlindstickConnected = false;
+        });
+      }
+    }
   }
 
   Future<void> _fetchKeluarga() async {
-    // Reset state setiap kali fungsi ini dipanggil
+    // Tidak perlu setState _isLoading di sini karena sudah ditangani _loadInitialData
     setState(() {
-      _isLoading = true;
       _error = null;
     });
 
@@ -47,46 +95,43 @@ class _PenyandangHomePageState extends State<PenyandangHomePage> {
       );
 
       final List<dynamic> data = response.data['data'];
-      setState(() {
-        keluargaList = data
-            .map(
-              (e) => {
-                'name': e['pemantau__user__name'],
-                'status': e['status'],
-                'detail_status': e['detail_status'],
-              },
-            )
-            .toList();
-      });
+      if (mounted) {
+        setState(() {
+          keluargaList = data
+              .map(
+                (e) => {
+                  'name': e['pemantau__user__name'],
+                  'status': e['status'],
+                  'detail_status': e['detail_status'],
+                },
+              )
+              .toList();
+        });
+      }
     } on DioError catch (e) {
-      // ---- INI BLOK YANG PALING PENTING ----
-      // Secara spesifik menangkap error dari Dio
       String errorMessage;
       if (e.response != null) {
-        // Jika server memberi respons error (404, 401, 503, dll)
         print(
           'KESALAHAN DIO: Status ${e.response?.statusCode} - Data: ${e.response?.data}',
         );
-        errorMessage = 'Gagal memuat data (Error ${e.response?.statusCode})';
+        errorMessage =
+            'Gagal memuat data keluarga (Error ${e.response?.statusCode})';
       } else {
-        // Jika request tidak sampai ke server (tidak ada internet, DNS salah)
         print('KESALAHAN DIO (Request): ${e.message}');
         errorMessage = 'Periksa koneksi internet Anda.';
       }
-      setState(() {
-        _error = errorMessage;
-      });
+      if (mounted) {
+        setState(() {
+          _error = errorMessage;
+        });
+      }
     } catch (e) {
-      // Menangkap error lain di luar Dio (misal: error saat mapping data)
       print('KESALAHAN TAK TERDUGA: $e');
-      setState(() {
-        _error = 'Terjadi kesalahan tidak terduga.';
-      });
-    } finally {
-      // Blok ini akan SELALU dieksekusi, baik sukses maupun gagal
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _error = 'Terjadi kesalahan tidak terduga.';
+        });
+      }
     }
   }
 
@@ -97,64 +142,88 @@ class _PenyandangHomePageState extends State<PenyandangHomePage> {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20),
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                WelcomeHeader(
-                  imgUrl:
-                      "https://yfgbsigquyriibzovooi.supabase.co/storage/v1/object/public/sightway/post/logo-blank.png",
-                  role: "Penyandang",
-                  name: userName,
-                  mailOnClick: () {
-                    Navigator.pushNamed(context, '/mail');
-                  },
-                ),
-                const SizedBox(height: 30),
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      WelcomeHeader(
+                        imgUrl:
+                            "https://yfgbsigquyriibzovooi.supabase.co/storage/v1/object/public/sightway/post/logo-blank.png",
+                        role: "Penyandang",
+                        name: userName,
+                        mailOnClick: () {
+                          Navigator.pushNamed(context, '/mail');
+                        },
+                      ),
+                      const SizedBox(height: 30),
 
-                BlindstickEmpty(
-                  mailOnClick: () {
-                    Navigator.pushNamed(context, '/scan-qr');
-                  },
-                ),
-                const SizedBox(height: 30),
+                      // --- MENGGUNAKAN WIDGET BUILDER KONDISIONAL ---
+                      _buildBlindstickSection(),
+                      const SizedBox(height: 30),
 
-                const Text(
-                  "Keluarga Penyandang",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                ),
-                const SizedBox(height: 12),
+                      const Text(
+                        "Keluarga Penyandang",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
 
-                _buildKeluargaList(),
-              ],
-            ),
-          ),
+                      _buildKeluargaList(),
+                    ],
+                  ),
+                ),
         ),
       ),
     );
   }
 
-  Widget _buildKeluargaList() {
-    if (_isLoading) {
-      // 1. Tampilkan loading jika sedang mengambil data
+  // --- WIDGET BUILDER BARU UNTUK KONDISIONAL BLINDSTICK ---
+  Widget _buildBlindstickSection() {
+    // 1. Tampilkan loading jika data blindstick belum ada
+    if (_isBlindstickConnected == null) {
       return const Center(child: CircularProgressIndicator());
     }
 
+    // 2. Tampilkan card jika blindstick terhubung
+    if (_isBlindstickConnected!) {
+      return BlindstickConnectedCard(
+        macAddress: _blindstickMacAddress ?? 'Alamat tidak tersedia',
+      );
+    }
+
+    // 3. Tampilkan opsi untuk menghubungkan jika tidak terhubung
+    return BlindstickEmpty(
+      // 1. Jadikan callback ini async
+      mailOnClick: () async {
+        // 2. Tunggu sampai halaman QR Scanner ditutup
+        await Navigator.pushNamed(context, '/scan-qr');
+        if (mounted) {
+          setState(() {
+            _isBlindstickConnected = null;
+          });
+        }
+        await _checkBlindstickStatus();
+      },
+    );
+  }
+
+  Widget _buildKeluargaList() {
+    // Bagian ini tidak perlu menampilkan loading lagi
     if (_error != null) {
-      // 2. Tampilkan pesan error jika terjadi kegagalan
       return Center(child: Text(_error!));
     }
 
     if (keluargaList.isEmpty) {
-      // 3. Tampilkan pesan jika data memang kosong
       return const Center(child: Text("Belum ada keluarga terhubung."));
     }
 
-    // 4. ✅ Gunakan ListView.builder jika ada data
     return ListView.builder(
-      shrinkWrap: true, // Penting di dalam SingleChildScrollView
-      physics:
-          const NeverScrollableScrollPhysics(), // Agar tidak ada double scroll
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
       itemCount: keluargaList.length,
       itemBuilder: (context, index) {
         final keluarga = keluargaList[index];
@@ -169,6 +238,50 @@ class _PenyandangHomePageState extends State<PenyandangHomePage> {
           ),
         );
       },
+    );
+  }
+}
+
+// --- WIDGET CARD BARU UNTUK BLINDSTICK YANG TERHUBUNG ---
+// Anda bisa letakkan ini di file terpisah (misal: blindstick_connected_card.dart) atau di bawah class ini.
+class BlindstickConnectedCard extends StatelessWidget {
+  final String macAddress;
+
+  const BlindstickConnectedCard({super.key, required this.macAddress});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColors
+            .primary, // Gunakan warna sukses atau warna lain yang sesuai
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          const Icon(
+            Icons.check_circle_outline, // Ikon yang menandakan sukses/terhubung
+            size: 40,
+            color: AppColors.background,
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            "Blindstick Terhubung",
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+              color: AppColors.background,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            macAddress, // Tampilkan MAC address
+            style: const TextStyle(fontSize: 12, color: AppColors.background),
+          ),
+        ],
+      ),
     );
   }
 }
