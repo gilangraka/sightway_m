@@ -131,12 +131,6 @@ class AuthController {
       final token = data['access_token'];
 
       if (token != null) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('token', token);
-        await prefs.setString('user_name', data['user']['name']);
-        await prefs.setString('user_email', data['user']['email']);
-        await prefs.setString('user_role', data['user']['roles'][0]['name']);
-
         _showSnackbar(context, 'Registrasi berhasil!', AppColors.primary);
         Navigator.pushReplacementNamed(context, '/login');
       } else {
