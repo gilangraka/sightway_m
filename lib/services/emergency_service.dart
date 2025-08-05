@@ -67,31 +67,41 @@ class EmergencyService {
 
   // Fungsi _transform tidak perlu diubah
   Float32List _transform(String text) {
-    // 1. Bersihkan teks dan pecah menjadi kata-kata tunggal (1-gram)
+    // 1. Bersihkan teks dan pecah menjadi kata-kata tunggal
     final cleanText = text.toLowerCase().replaceAll(RegExp(r'[^\w\s]'), '');
     final singleWords = cleanText
         .split(RegExp(r'\s+'))
         .where((s) => s.isNotEmpty)
         .toList();
 
-    // 2. Buat daftar gabungan yang akan berisi 1-gram dan 2-gram
-    final List<String> allTerms = List.from(singleWords);
-
-    // 3. Tambahkan pasangan kata (2-gram) ke dalam daftar
-    for (int i = 0; i < singleWords.length - 1; i++) {
-      allTerms.add('${singleWords[i]} ${singleWords[i + 1]}');
+    // Jika tidak ada kata, kembalikan vektor nol
+    if (singleWords.isEmpty) {
+      return Float32List.fromList(List.filled(_vocabulary.length, 0.0));
     }
 
-    // 4. Hitung vektor TF-IDF berdasarkan `allTerms` yang sudah lengkap
+    // 2. Buat daftar untuk menampung semua n-gram yang akan dihasilkan
+    final List<String> allTerms = [];
+
+    // 3. Loop untuk menghasilkan n-gram dari 1 hingga 4
+    //    Kita batasi hingga 4 agar sesuai dengan model yang dilatih.
+    //    Maksimal n-gram juga tidak boleh lebih dari panjang kalimat itu sendiri.
+    final int maxNgram = 4;
+    for (int n = 1; n <= maxNgram && n <= singleWords.length; n++) {
+      // Loop dalam membuat frasa berdasarkan ukuran n
+      for (int i = 0; i <= singleWords.length - n; i++) {
+        // Ambil kata-kata dari i sampai i+n, lalu gabungkan dengan spasi
+        final ngramPhrase = singleWords.sublist(i, i + n).join(' ');
+        allTerms.add(ngramPhrase);
+      }
+    }
+
+    // 4. Hitung vektor TF-IDF (Logika di bagian ini tidak perlu diubah)
     final vector = List.filled(_vocabulary.length, 0.0);
     for (int i = 0; i < _vocabulary.length; i++) {
-      // _vocabulary[i] bisa berupa "tolong" atau "tolong ambilkan"
       final vocabTerm = _vocabulary[i];
 
-      // Hitung frekuensi kemunculan term dari input pengguna
       final tf = allTerms.where((term) => term == vocabTerm).length.toDouble();
 
-      // Jika term ditemukan, hitung nilai TF-IDF nya
       if (tf > 0 && _idf.containsKey(vocabTerm)) {
         vector[i] = tf * _idf[vocabTerm]!;
       }
